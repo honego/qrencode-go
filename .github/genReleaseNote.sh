@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 honeok <i@honeok.com>
 
-set -eEuxo pipefail
+set -eExo pipefail
 
-PREVIOUS_VERSION="$1"
-CURRENT_VERSION="$2"
+PREVIOUS_VERSION="${1:-}"
+CURRENT_VERSION="${2:-}"
 
 ((BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 4))) ||
     {
@@ -13,8 +13,8 @@ CURRENT_VERSION="$2"
         exit 69
     }
 
-[ -n "$PREVIOUS_VERSION" ] && [ -n "$CURRENT_VERSION" ] || {
-    echo "Usage: $0 <PREVIOUS_VERSION> <CURRENT_VERSION>"
+[ -n "$CURRENT_VERSION" ] || {
+    echo "Usage: $0 [<PREVIOUS_VERSION>] <CURRENT_VERSION>"
     exit 64
 }
 
