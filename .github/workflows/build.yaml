@@ -1,0 +1,152 @@
+---
+name: "Build"
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: ["master"]
+    tags: ["v*"]
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: "Build binary"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          # Linux
+          - { goos: linux, goarch: "386" }
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm, goarm: "5" }
+          - { goos: linux, goarch: arm, goarm: "6" }
+          - { goos: linux, goarch: arm, goarm: "7" }
+          - { goos: linux, goarch: arm64 }
+          - { goos: linux, goarch: mips64 }
+          - { goos: linux, goarch: mips64le }
+          - { goos: linux, goarch: riscv64 }
+          - { goos: linux, goarch: loong64 }
+          - { goos: linux, goarch: s390x }
+          - { goos: linux, goarch: ppc64 }
+          - { goos: linux, goarch: ppc64le }
+
+          # MacOS
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+
+          # FreeBSD
+          - { goos: freebsd, goarch: "386" }
+          - { goos: freebsd, goarch: amd64 }
+          - { goos: freebsd, goarch: arm64 }
+
+          # OpenBSD
+          - { goos: openbsd, goarch: "386" }
+          - { goos: openbsd, goarch: amd64 }
+          - { goos: openbsd, goarch: arm64 }
+
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      GOARM: ${{ matrix.goarm }}
+      CGO_ENABLED: 0
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: "Setup Go"
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: "go.mod"
+          check-latest: true
+
+      - name: "Build qrencode"
+        run: |
+          set -eEuxo pipefail
+          mkdir -p dist || exit 1
+          PROJECT_NAME="$(cut -d'-' -f1 <<< "${GITHUB_REPOSITORY#*/}")"
+          if [ -n "$GOARM" ]; then
+            OUTPUT_NAME="${PROJECT_NAME}-${GOOS}-${GOARCH}v${GOARM}"
+          else
+            OUTPUT_NAME="${PROJECT_NAME}-${GOOS}-${GOARCH}"
+          fi
+          echo "OUTPUT_NAME=$OUTPUT_NAME" >> "$GITHUB_ENV"
+          echo "GOOS: $GOOS, GOARCH: $GOARCH, GOARM: $GOARM"
+          go build -v -trimpath -o dist/$OUTPUT_NAME -ldflags="-s -w -buildid="
+
+      - name: "Package assets"
+        working-directory: ./dist
+        shell: bash
+        run: |
+          set -eEuxo pipefail
+          touch -mt "$(date +%Y01010000)" -- *
+
+      - name: "Upload artifact"
+        uses: actions/upload-artifact@v6
+        if: github.event_name == 'release' || contains(github.ref, 'refs/tags/')
+        with:
+          name: ${{ env.OUTPUT_NAME }}
+          path: ./dist/${{ env.OUTPUT_NAME }}
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    name: "Publish release"
+    needs: build
+    if: github.event_name == 'release' || contains(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: "Download artifact"
+        uses: actions/download-artifact@v7
+        with:
+          path: /tmp/assets
+          pattern: qrencode-*
+          merge-multiple: true
+
+      - name: "Generate checksums"
+        working-directory: /tmp/assets
+        run: |
+          set -eEuxo pipefail
+          ls -R
+          sha256sum qrencode* > sha256sum.txt
+
+      - name: "Fetch tags"
+        run: |
+          echo "PREVIOUS_VERSION=$(git describe --tags --abbrev=0 --match "v*" HEAD^ 2> /dev/null || echo "")" >> "$GITHUB_ENV"
+          echo "CURRENT_VERSION=${{ github.ref_name }}" >> "$GITHUB_ENV"
+
+      - name: "Build Changelog"
+        run: |
+          cp ./.github/genReleaseNote.sh ./
+          chmod +x genReleaseNote.sh
+          ./genReleaseNote.sh "$PREVIOUS_VERSION" "$CURRENT_VERSION"
+          rm -f genReleaseNote.sh || exit 1
+
+      - name: "Upload release"
+        uses: softprops/action-gh-release@v2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          body_path: ./release.md
+          files: /tmp/assets/*
