@@ -97,6 +97,7 @@ jobs:
 
       - name: "Upload artifact"
         uses: actions/upload-artifact@v6
+        if: github.event_name == 'release' || contains(github.ref, 'refs/tags/')
         with:
           name: ${{ env.OUTPUT_NAME }}
           path: ./dist/${{ env.OUTPUT_NAME }}
