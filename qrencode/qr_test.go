@@ -43,7 +43,9 @@ func TestGenerateECBytes(t *testing.T) {
 
 func BenchmarkEncode(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		Encode("Testing one two three four five six seven eight nine ten eleven twelve thirteen", ECLevelQ)
+		if _, err := Encode("Testing one two three four five six seven eight nine ten eleven twelve thirteen", ECLevelQ); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -57,5 +59,7 @@ func ExampleEncode() {
 		return
 	}
 	defer f.Close()
-	png.Encode(f, grid.Image(8))
+	if err := png.Encode(f, grid.Image(8)); err != nil {
+		return
+	}
 }

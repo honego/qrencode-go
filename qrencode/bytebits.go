@@ -1,5 +1,17 @@
 package qrencode
 
+var (
+	_ = newByteBitGrid
+	_ = (*byteBitVector).Append
+	_ = (*byteBitVector).AppendBits
+	_ = (*byteBitGrid).Width
+	_ = (*byteBitGrid).Height
+	_ = (*byteBitGrid).Empty
+	_ = (*byteBitGrid).Get
+	_ = (*byteBitGrid).Set
+	_ = (*byteBitGrid).Clear
+)
+
 type byteBitVector struct {
 	bitIndex byte
 	bits     []byte
@@ -84,7 +96,7 @@ func (g *byteBitGrid) Set(x, y int, v bool) {
 }
 
 func (g *byteBitGrid) Clear() {
-	for i, _ := range g.bits {
+	for i := range g.bits {
 		g.bits[i] = 0
 	}
 }

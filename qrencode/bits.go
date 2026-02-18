@@ -98,29 +98,29 @@ func (g *BitGrid) TerminalOutput(w io.Writer) {
 	black := "\033[40m  \033[0m"
 	newline := "\n"
 
-	w.Write([]byte(white))
+	_, _ = w.Write([]byte(white))
 	for i := 0; i <= g.Width(); i++ {
-		w.Write([]byte(white))
+		_, _ = w.Write([]byte(white))
 	}
-	w.Write([]byte(newline))
+	_, _ = w.Write([]byte(newline))
 
 	for i := 0; i < g.Height(); i++ {
-		w.Write([]byte(white))
+		_, _ = w.Write([]byte(white))
 		for j := 0; j < g.Width(); j++ {
 			if g.Get(j, i) {
-				w.Write([]byte(black))
+				_, _ = w.Write([]byte(black))
 			} else {
-				w.Write([]byte(white))
+				_, _ = w.Write([]byte(white))
 			}
 		}
-		w.Write([]byte(white))
-		w.Write([]byte(newline))
+		_, _ = w.Write([]byte(white))
+		_, _ = w.Write([]byte(newline))
 	}
-	w.Write([]byte(white))
+	_, _ = w.Write([]byte(white))
 	for i := 0; i <= g.Width(); i++ {
-		w.Write([]byte(white))
+		_, _ = w.Write([]byte(white))
 	}
-	w.Write([]byte(newline))
+	_, _ = w.Write([]byte(newline))
 }
 
 // Return an image of the grid, with black blocks for true items and

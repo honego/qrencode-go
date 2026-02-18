@@ -179,7 +179,7 @@ var (
 		79, 174, 213, 233, 230, 231, 173, 232, 116, 214, 244, 234, 168, 80, 88, 175,
 	}
 	fieldZero        = gfPoly{[]int{0}}
-	cachedGenerators = []gfPoly{gfPoly{[]int{1}}}
+	cachedGenerators = []gfPoly{{[]int{1}}}
 )
 
 func fieldAddSub(a, b int) int {

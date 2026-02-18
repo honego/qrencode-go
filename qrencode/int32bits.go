@@ -1,5 +1,17 @@
 package qrencode
 
+var (
+	_ = newUint32BitGrid
+	_ = (*uint32BitVector).Append
+	_ = (*uint32BitVector).AppendBits
+	_ = (*uint32BitGrid).Width
+	_ = (*uint32BitGrid).Height
+	_ = (*uint32BitGrid).Empty
+	_ = (*uint32BitGrid).Get
+	_ = (*uint32BitGrid).Set
+	_ = (*uint32BitGrid).Clear
+)
+
 type uint32BitVector struct {
 	bitIndex byte
 	bits     []uint32
@@ -84,7 +96,7 @@ func (g *uint32BitGrid) Set(x, y int, v bool) {
 }
 
 func (g *uint32BitGrid) Clear() {
-	for i, _ := range g.bits {
+	for i := range g.bits {
 		g.bits[i] = 0
 	}
 }

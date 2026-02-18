@@ -46,9 +46,7 @@ func contentBits(content []byte, ecLevel ECLevel, mode modeIndicator, headerBits
 	return headerAndDataBits, version, nil
 }
 
-var (
-	invalidAlphanumericByte = errors.New("Invalid Alphanumeric Byte")
-)
+var invalidAlphanumericByte = errors.New("Invalid Alphanumeric Byte")
 
 func alphanumericCode(b byte) (byte, error) {
 	switch b {

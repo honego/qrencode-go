@@ -57,7 +57,7 @@ func (g *boolBitGrid) Set(x, y int, v bool) {
 }
 
 func (g *boolBitGrid) Clear() {
-	for i, _ := range g.bits {
+	for i := range g.bits {
 		g.bits[i] = false
 	}
 }
