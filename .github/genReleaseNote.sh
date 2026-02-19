@@ -14,20 +14,27 @@ CURRENT_VERSION="${2:-}"
     }
 
 [ -n "$CURRENT_VERSION" ] || {
-    echo "Usage: $0 [<PREVIOUS_VERSION>] <CURRENT_VERSION>"
+    echo "Usage: $0 <PREVIOUS_VERSION> <CURRENT_VERSION>"
     exit 64
 }
 
 generate_notes() {
-    local TITLE REGULAR LOGS
+    local TITLE REGULAR COMMIT_MSG COMMIT_RANGE
 
     TITLE="$1"
     REGULAR="$2"
-    LOGS="$(git log --reverse --pretty=format:"* %h %s by @%an" --grep="$REGULAR" -i "$PREVIOUS_VERSION..$CURRENT_VERSION" 2> /dev/null | awk '!seen[$0]++')"
 
-    if [ -n "$LOGS" ]; then
+    if [ -n "$PREVIOUS_VERSION" ]; then
+        COMMIT_RANGE="$PREVIOUS_VERSION..$CURRENT_VERSION"
+    else
+        COMMIT_RANGE="$CURRENT_VERSION"
+    fi
+
+    COMMIT_MSG="$(git log --reverse --pretty=format:"* %h %s by @%an" --grep="$REGULAR" -i "$COMMIT_RANGE" 2> /dev/null | awk '!seen[$0]++')"
+
+    if [ -n "$COMMIT_MSG" ]; then
         echo "## $TITLE"
-        echo "$LOGS"
+        echo "$COMMIT_MSG"
         echo ""
     fi
 }
@@ -36,5 +43,11 @@ generate_notes() {
     generate_notes "What's Changed" "^feat"
     generate_notes "BUG & Fix" "^fix"
     generate_notes "Maintenance" "^chore\|^docs\|^refactor\|^ci\|^test"
-    echo "**Full Changelog**: https://github.com/$GITHUB_REPOSITORY/compare/$PREVIOUS_VERSION...$CURRENT_VERSION"
+
+    if [ -n "$PREVIOUS_VERSION" ]; then
+        echo "**Full Changelog**: https://github.com/$GITHUB_REPOSITORY/compare/$PREVIOUS_VERSION...$CURRENT_VERSION"
+    else
+        echo "**Full Changelog**: https://github.com/$GITHUB_REPOSITORY/releases/tag/$CURRENT_VERSION"
+    fi
+
 } > release.md
