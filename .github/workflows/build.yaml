@@ -2,8 +2,6 @@
 name: "Build"
 
 on:
-  release:
-    types: [published]
   push:
     branches: ["master"]
     tags: ["v*"]
@@ -97,7 +95,7 @@ jobs:
 
       - name: "Upload artifact"
         uses: actions/upload-artifact@v6
-        if: github.event_name == 'release' || contains(github.ref, 'refs/tags/')
+        if: contains(github.ref, 'refs/tags/')
         with:
           name: ${{ env.OUTPUT_NAME }}
           path: ./dist/${{ env.OUTPUT_NAME }}
@@ -107,7 +105,7 @@ jobs:
   release:
     name: "Publish release"
     needs: build
-    if: github.event_name == 'release' || contains(github.ref, 'refs/tags/')
+    if: contains(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -134,7 +132,7 @@ jobs:
 
       - name: "Fetch tags"
         run: |
-          CURRENT_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          CURRENT_TAG="${{ github.ref_name }}"
           PREVIOUS_TAG="$(git tag --list 'v*' --sort=-version:refname | grep -Fv "$CURRENT_TAG" | sort -rV | head -n 1)"
           echo "PREVIOUS_VERSION=$PREVIOUS_TAG" >> "$GITHUB_ENV"
           echo "CURRENT_VERSION=$CURRENT_TAG" >> "$GITHUB_ENV"
